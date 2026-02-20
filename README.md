@@ -287,3 +287,8 @@ https://github.com/rugved0149
 This is not a beginner-level phishing checker.
 
 It is an engineered, modular detection component designed for scalable security architectures.
+
+---
+## License
+
+This project is licensed under the MIT License – see the LICENSE file for details.
