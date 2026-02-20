@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+tldextract
+python-whois
+requests
+requests-file
+filelock
+idna
+charset-normalizer
+urllib3
+certifi
