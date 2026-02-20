@@ -9,3 +9,4 @@ idna
 charset-normalizer
 urllib3
 certifi
+jinja2
