@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PHEMA Phishing Engine</title>
+    <link href="/static/css/output.css" rel="stylesheet">
+
+    <script>
+        async function analyzeURL() {
+            const input = document.getElementById("urlInput");
+            const button = document.getElementById("analyzeBtn");
+            const status = document.getElementById("status");
+            const results = document.getElementById("results");
+            const riskBox = document.getElementById("riskBox");
+
+            const url = input.value.trim();
+            if (!url) return;
+
+            // ---- ENTER → ANALYZING STATE ----
+            results.innerHTML = "";
+            riskBox.classList.add("hidden");
+
+            button.disabled = true;
+            input.disabled = true;
+
+            status.innerHTML = `
+                <div class="flex items-center gap-2 text-blue-400">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
+                    <span>Analyzing URL...</span>
+                </div>
+            `;
+
+            try {
+                const response = await fetch("/analyze", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                // ---- ANALYZING → RESULT STATE ----
+                renderResults(data);
+
+            } catch (err) {
+                results.innerHTML = `
+                    <div class="bg-red-900 text-red-300 p-4 rounded mt-4">
+                        Server error occurred.
+                    </div>`;
+            } finally {
+                button.disabled = false;
+                input.disabled = false;
+                status.innerHTML = "";
+            }
+        }
+
+        function renderResults(data) {
+            const results = document.getElementById("results");
+            const riskBox = document.getElementById("riskBox");
+            const riskLevel = document.getElementById("riskLevel");
+
+            results.innerHTML = "";
+
+            if (!data.events || data.events.length === 0) {
+                riskBox.classList.remove("hidden");
+                riskLevel.innerHTML = `
+                    <span class="text-green-400 font-bold">LOW RISK</span>
+                `;
+
+                results.innerHTML = `
+                    <div class="bg-green-900 text-green-300 p-4 rounded mt-4">
+                        No phishing signals detected.
+                    </div>`;
+                return;
+            }
+
+            riskBox.classList.remove("hidden");
+            riskLevel.innerHTML = `
+                <span class="text-red-400 font-bold">POTENTIAL THREAT</span>
+            `;
+
+            data.events.forEach(event => {
+                const severityColor =
+                    event.severity === "high" ? "red" :
+                    event.severity === "medium" ? "yellow" : "blue";
+
+                results.innerHTML += `
+                    <div class="bg-gray-800 p-4 rounded mt-4 border-l-4 border-${severityColor}-500">
+                        <p class="text-lg font-semibold">${event.signal}</p>
+                        <p class="text-${severityColor}-400">Severity: ${event.severity}</p>
+                        <p class="text-gray-400">Confidence: ${event.confidence}</p>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+
+<div class="w-full max-w-3xl p-8 bg-gray-800 rounded-xl shadow-2xl">
+
+    <h1 class="text-3xl font-bold mb-6 text-center">
+        PHEMA Phishing Intelligence
+    </h1>
+
+    <div class="flex gap-2">
+        <input
+            id="urlInput"
+            type="text"
+            placeholder="Enter URL..."
+            class="flex-1 p-3 rounded bg-gray-700 focus:outline-none"
+        />
+        <button
+            id="analyzeBtn"
+            onclick="analyzeURL()"
+            class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded font-semibold transition"
+        >
+            Analyze
+        </button>
+    </div>
+
+    <!-- STATUS (REAL-TIME) -->
+    <div id="status" class="mt-4 h-6"></div>
+
+    <!-- RISK SUMMARY -->
+    <div id="riskBox" class="hidden mt-6 bg-gray-700 p-4 rounded">
+        <div id="riskLevel"></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results" class="mt-4"></div>
+
+</div>
+
+</body>
+</html>
